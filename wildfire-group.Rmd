@@ -1,0 +1,141 @@
+---
+title: "wildfire"
+output: pdf_document
+date: "2023-11-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# Load necessary libraries
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+# Load the dataset
+wildfire_data <- read_csv("C:/Users/nasim/OneDrive/Desktop/trent_second_semester/Data_Visualization/project/modified_file_with_date.csv")
+
+# Since we're focusing on brightness, day/night, and time, we filter the columns
+wildfire_subset <- wildfire_data %>%
+  select(date, time, brightness, daynight)
+
+# Convert the 'time' column to a proper time class if needed
+wildfire_subset <- wildfire_subset %>%
+  mutate(time)
+
+# Analyze brightness levels by day and night
+# Calculate summary statistics
+day_stats <- wildfire_subset %>%
+  filter(daynight == "D") %>%
+  summarise(
+    mean_brightness = mean(brightness, na.rm = TRUE),
+    sd_brightness = sd(brightness, na.rm = TRUE)
+  )
+
+night_stats <- wildfire_subset %>%
+  filter(daynight == "N") %>%
+  summarise(
+    mean_brightness = mean(brightness, na.rm = TRUE),
+    sd_brightness = sd(brightness, na.rm = TRUE)
+  )
+
+# Create histograms for day and night brightness
+ggplot(wildfire_subset, aes(x = brightness)) +
+  geom_histogram(data = subset(wildfire_subset, daynight == "D"), fill = "#97A2FF") +
+  geom_histogram(data = subset(wildfire_subset, daynight == "N"), fill = "#6EB5FF", alpha = 0.5) +
+  facet_wrap(~daynight) +
+  labs(title = "Brightness Distribution by Day and Night", x = "Brightness", y = "Frequency")
+
+# Time series of brightness
+ggplot(wildfire_subset, aes(x = date, y = brightness, color = daynight)) +
+  geom_line() +
+  labs(title = "Time Series of Brightness", x = "Date", y = "Brightness")
+
+# Box plots for day and night brightness
+ggplot(wildfire_subset, aes(x = daynight, y = brightness)) +
+  geom_boxplot() +
+  labs(title = "Brightness Levels by Day and Night", x = "", y = "Brightness")
+
+```
+```{r}
+ggplot(wildfire_subset, aes(x = brightness, fill = daynight)) +
+  geom_density(alpha = 0.7) +
+  labs(title = "Density Plot of Brightness by Day and Night", x = "Brightness", y = "Density")
+
+```
+
+```{r}
+ggplot(wildfire_subset, aes(x = daynight, y = brightness)) +
+  geom_violin(trim = FALSE) +
+  labs(title = "Violin Plot of Brightness Levels by Day and Night", x = "", y = "Brightness")
+
+```
+
+
+```{r}
+library(hms) # For handling time values
+
+# Converting the 'time' column to an hms object, then to numeric
+wildfire_subset <- wildfire_subset %>%
+  mutate(time_of_day = as.numeric(time))
+
+# Now create your scatter plot
+ggplot(wildfire_subset, aes(x = time_of_day, y = brightness, color = daynight)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Brightness Over Time by Day and Night", x = "Time of Day", y = "Brightness")
+
+
+```
+
+# statistics
+
+```{r}
+
+# Summary statistics for day brightness
+day_stats <- wildfire_subset %>%
+  filter(daynight == "D") %>%
+  summarise(
+    mean_brightness = mean(brightness, na.rm = TRUE),
+    median_brightness = median(brightness, na.rm = TRUE),
+    sd_brightness = sd(brightness, na.rm = TRUE),
+    iqr_brightness = IQR(brightness, na.rm = TRUE)
+  )
+
+# Summary statistics for night brightness
+night_stats <- wildfire_subset %>%
+  filter(daynight == "N") %>%
+  summarise(
+    mean_brightness = mean(brightness, na.rm = TRUE),
+    median_brightness = median(brightness, na.rm = TRUE),
+    sd_brightness = sd(brightness, na.rm = TRUE),
+    iqr_brightness = IQR(brightness, na.rm = TRUE)
+  )
+
+# we also performed a t-test to compare the means of two groups if assumptions are met
+t_test_results <- t.test(brightness ~ daynight, data = wildfire_subset)
+
+# Output the results
+print(day_stats)
+print(night_stats)
+print(t_test_results)
+
+```
+
+```{r}
+library(psych)
+
+day_describe <- describe(wildfire_subset %>% filter(daynight == "D") %>% pull(brightness))
+night_describe <- describe(wildfire_subset %>% filter(daynight == "N") %>% pull(brightness))
+
+# Print the results
+print(day_describe)
+print(night_describe)
+str(wildfire_subset)
+print(wildfire_subset)
+
+```
+
